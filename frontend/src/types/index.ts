@@ -2,8 +2,8 @@ export interface Detection {
   id: string;
   type: string;
   name: string;
-  coordinates: [number, number];
-  confidence: number;
+  coordinates?: [number, number];
+  confidence?: number;
   bbox?: any;
   distance_to_target?: number;
   model?: string;

@@ -9,50 +9,62 @@ import {
   Settings,
   Menu,
   X,
-  Globe2
+  Globe2,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { useState } from 'react';
+import { useAppStore } from '../store/useAppStore';
 
 const navItems = [
-  { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', color: 'from-blue-500 to-cyan-500' },
-  { path: '/query', icon: Search, label: 'Query', color: 'from-green-500 to-emerald-500' },
-  { path: '/analysis', icon: TrendingUp, label: 'Analysis', color: 'from-purple-500 to-pink-500' },
-  { path: '/simulation', icon: CloudRain, label: 'Simulation', color: 'from-orange-500 to-red-500' },
-  { path: '/history', icon: History, label: 'History', color: 'from-indigo-500 to-blue-500' },
-  { path: '/settings', icon: Settings, label: 'Settings', color: 'from-gray-500 to-slate-500' },
+  { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { path: '/query', icon: Search, label: 'Query' },
+  { path: '/analysis', icon: TrendingUp, label: 'Analysis' },
+  { path: '/simulation', icon: CloudRain, label: 'Simulation' },
+  { path: '/history', icon: History, label: 'History' },
+  { path: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
+  const { theme, setTheme } = useAppStore();
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="flex h-screen overflow-hidden bg-background text-foreground">
       {/* Sidebar */}
       <motion.aside
         initial={{ x: -280 }}
         animate={{ x: sidebarOpen ? 0 : -280 }}
         transition={{ type: 'spring', damping: 20, stiffness: 200 }}
-        className="fixed left-0 top-0 h-full w-[280px] bg-slate-900/95 backdrop-blur-xl border-r border-slate-700/50 z-50 flex flex-col"
+        className="fixed left-0 top-0 z-50 flex h-full w-[280px] flex-col border-r border-border bg-card shadow-xl shadow-slate-900/5"
       >
         {/* Logo */}
-        <div className="p-6 border-b border-slate-700/50">
+        <div className="border-b border-border p-6">
           <motion.div 
             className="flex items-center gap-3"
             whileHover={{ scale: 1.02 }}
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/20">
-              <Globe2 className="w-6 h-6 text-white" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-md">
+              <Globe2 className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">DISHA</h1>
-              <p className="text-xs text-slate-400">GeoQuery Pune</p>
+              <h1 className="text-xl font-bold tracking-tight text-foreground">DISHA</h1>
+              <p className="text-xs text-muted-foreground">GeoQuery Pune</p>
             </div>
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Close navigation"
+              className="ml-auto rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </motion.div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        <nav aria-label="Main navigation" className="flex-1 space-y-1 overflow-y-auto p-4">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
@@ -63,17 +75,17 @@ export function Layout() {
                   whileHover={{ scale: 1.02, x: 4 }}
                   whileTap={{ scale: 0.98 }}
                   className={`
-                    relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
+                    relative flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200
                     ${isActive 
-                      ? 'bg-gradient-to-r ' + item.color + ' text-white shadow-lg' 
-                      : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                     }
                   `}
                 >
                   {isActive && (
                     <motion.div
                       layoutId="activeTab"
-                      className="absolute inset-0 bg-gradient-to-r opacity-10 rounded-xl"
+                      className="absolute inset-0 rounded-xl bg-gradient-to-r opacity-10"
                       transition={{ type: 'spring', damping: 20, stiffness: 200 }}
                     />
                   )}
@@ -82,7 +94,7 @@ export function Layout() {
                   {isActive && (
                     <motion.div
                       layoutId="activeIndicator"
-                      className="absolute right-3 w-2 h-2 bg-white rounded-full"
+                      className="absolute right-3 h-2 w-2 rounded-full bg-primary-foreground"
                       transition={{ type: 'spring', damping: 20, stiffness: 200 }}
                     />
                   )}
@@ -93,39 +105,59 @@ export function Layout() {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-700/50">
-          <div className="px-4 py-3 rounded-xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20">
-            <p className="text-xs text-green-400 font-medium">✨ Pro Tip</p>
-            <p className="text-xs text-slate-400 mt-1">
+        <div className="border-t border-border p-4">
+          <div className="rounded-xl border border-status-success/20 bg-status-success/10 px-4 py-3">
+            <p className="text-xs font-medium text-status-success">Pro tip</p>
+            <p className="mt-1 text-xs text-foreground/80">
               Use natural language queries for best results
             </p>
           </div>
         </div>
       </motion.aside>
 
+      {sidebarOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 z-40 bg-[hsl(var(--overlay-backdrop)/0.24)] backdrop-blur-[1px] lg:hidden"
+        />
+      )}
+
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? 'ml-[280px]' : 'ml-0'}`}>
+      <div className={`flex min-w-0 flex-1 flex-col transition-all duration-300 ${sidebarOpen ? 'lg:ml-[280px]' : 'ml-0'}`}>
         {/* Top Bar */}
-        <header className="h-16 bg-slate-900/50 backdrop-blur-xl border-b border-slate-700/50 flex items-center justify-between px-6 z-40">
+        <header className="z-40 flex h-16 shrink-0 items-center justify-between border-b border-border bg-card/95 px-6 shadow-sm backdrop-blur">
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg hover:bg-slate-800/50 text-slate-400 hover:text-white transition-colors"
+            aria-label={sidebarOpen ? 'Close navigation' : 'Open navigation'}
+            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </motion.button>
 
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-500/10 border border-green-500/20">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-sm text-green-400 font-medium">System Online</span>
+          <div className="flex items-center gap-3">
+            <div className="hidden items-center gap-2 rounded-full border border-status-success/20 bg-status-success/10 px-3 py-1.5 sm:flex">
+              <div className="h-2 w-2 animate-pulse rounded-full bg-status-success" />
+              <span className="text-xs font-medium text-status-success">System Online</span>
             </div>
+            <button
+              type="button"
+              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+              aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
+              aria-pressed={theme === 'dark'}
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+              <span className="hidden sm:inline">{theme === 'light' ? 'Dark mode' : 'Light mode'}</span>
+            </button>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto">
+        <main className="min-w-0 flex-1 overflow-auto bg-background">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}

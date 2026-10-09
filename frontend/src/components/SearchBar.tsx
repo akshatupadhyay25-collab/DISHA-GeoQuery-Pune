@@ -161,7 +161,7 @@ export function SearchBar() {
             onClick={handleVoice}
             className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-smooth ${
               isListening
-                ? 'bg-status-error text-white animate-pulse'
+                ? 'bg-status-error text-status-error-foreground animate-pulse'
                 : 'bg-surface-primary hover:bg-border-subtle text-text-secondary'
             }`}
             title="Voice input"
@@ -181,7 +181,7 @@ export function SearchBar() {
           <button
             onClick={() => handleSubmit()}
             disabled={isLoading || !input.trim()}
-            className="flex-shrink-0 w-9 h-9 rounded-lg bg-brand hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed text-white flex items-center justify-center transition-smooth"
+            className="flex-shrink-0 w-9 h-9 rounded-lg bg-brand hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed text-primary-foreground flex items-center justify-center transition-smooth"
           >
             {isLoading ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

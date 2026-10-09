@@ -259,7 +259,7 @@ function AttachmentGalleryModal({
           position: "fixed",
           top: geometry.top, left: geometry.left, width: geometry.width, height: geometry.height,
           borderRadius: geometry.radius, transition: flipTransition, overflow: "hidden",
-          boxShadow: isOpen ? "0 24px 60px -12px rgb(0 0 0 / 0.35)" : "0 0px 0px 0px rgb(0 0 0 / 0)",
+          boxShadow: isOpen ? "0 24px 60px -12px hsl(var(--elevation-shadow) / 0.28)" : "0 0px 0px 0px hsl(var(--elevation-shadow) / 0)",
         }}
         className="bg-muted"
         onTransitionEnd={() => { if (phase === "closing") onClose(); }}

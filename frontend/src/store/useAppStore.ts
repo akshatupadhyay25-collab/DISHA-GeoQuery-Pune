@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import { ChatMessage, QueryResult, SimulationResult, Detection } from '../types';
 
 interface AppState {
+  theme: 'light' | 'dark';
+  setTheme: (theme: 'light' | 'dark') => void;
+
   // Chat
   messages: ChatMessage[];
   addMessage: (msg: ChatMessage) => void;
@@ -43,7 +46,36 @@ interface AppState {
   setShowResults: (show: boolean) => void;
 }
 
+function getInitialTheme(): 'light' | 'dark' {
+  try {
+    return localStorage.getItem('disha-theme') === 'dark' ? 'dark' : 'light';
+  } catch (error) {
+    console.error('Unable to read the saved theme preference:', error);
+    return 'light';
+  }
+}
+
+function applyTheme(theme: 'light' | 'dark') {
+  if (typeof document !== 'undefined') {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  }
+}
+
+const initialTheme = getInitialTheme();
+applyTheme(initialTheme);
+
 export const useAppStore = create<AppState>((set) => ({
+  theme: initialTheme,
+  setTheme: (theme) => {
+    applyTheme(theme);
+    try {
+      localStorage.setItem('disha-theme', theme);
+    } catch (error) {
+      console.error('Unable to save the theme preference:', error);
+    }
+    set({ theme });
+  },
+
   messages: [],
   addMessage: (msg) => set((state) => ({ messages: [...state.messages, msg] })),
   clearMessages: () => set({ messages: [] }),

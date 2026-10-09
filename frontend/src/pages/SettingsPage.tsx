@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Key, Save, Eye, EyeOff, Globe, Database, Cpu } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAppStore } from '../store/useAppStore';
 
 export function SettingsPage() {
+  const { theme, setTheme } = useAppStore();
   const [apiKeys, setApiKeys] = useState({
-    gemini: 'AQ.Ab8RN6IkBZ8O3lIx6N-F9X15pFFQKB_lcgismftr7uJCNz5Fxg',
-    mapbox: 'pk.eyJ1IjoiYWtzaGF0LTEyMyIsImEiOiJjbXYwdXU4dG0wYmFpMnpxdHBnbzN4YXhrIn0.Pgwyo_vyrRAanyFh9FEueQ',
-    planet: 'PLAK0951b83955b24f5e93e55ea0f3a1029a'
+    gemini: '',
+    mapbox: '',
+    planet: ''
   });
 
   const [showKeys, setShowKeys] = useState({
@@ -17,7 +19,6 @@ export function SettingsPage() {
   });
 
   const [preferences, setPreferences] = useState({
-    theme: 'dark',
     language: 'en',
     defaultArea: 'Pune City',
     autoSave: true,
@@ -39,8 +40,8 @@ export function SettingsPage() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
-        <p className="text-slate-400">Configure API keys and preferences</p>
+        <h1 className="mb-2 text-3xl font-bold tracking-tight text-foreground">Settings</h1>
+        <p className="text-muted-foreground">Configure API keys and preferences</p>
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -52,15 +53,15 @@ export function SettingsPage() {
           className="space-y-4"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
-              <Key className="w-5 h-5 text-white" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+              <Key className="w-5 h-5 text-primary-foreground" />
             </div>
-            <h2 className="text-xl font-bold text-white">API Keys</h2>
+            <h2 className="text-xl font-bold text-foreground">API Keys</h2>
           </div>
 
           {/* Gemini API Key */}
-          <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700/50">
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <label className="mb-2 block text-sm font-medium text-foreground">
               Google Gemini API Key
             </label>
             <div className="relative">
@@ -68,22 +69,22 @@ export function SettingsPage() {
                 type={showKeys.gemini ? 'text' : 'password'}
                 value={apiKeys.gemini}
                 onChange={(e) => setApiKeys(prev => ({ ...prev, gemini: e.target.value }))}
-                className="w-full px-4 py-3 pr-12 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white outline-none focus:border-purple-500/50 transition-colors font-mono text-sm"
+                className="w-full rounded-xl border border-input bg-background py-3 pl-4 pr-12 font-mono text-sm text-foreground outline-none transition-colors focus:border-primary"
                 placeholder="Enter Gemini API key"
               />
               <button
                 onClick={() => toggleKeyVisibility('gemini')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
               >
                 {showKeys.gemini ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
-            <p className="text-xs text-slate-500 mt-2">Used for natural language query understanding</p>
+            <p className="mt-2 text-xs text-muted-foreground">Used for natural language query understanding</p>
           </div>
 
           {/* Mapbox Token */}
-          <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700/50">
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <label className="mb-2 block text-sm font-medium text-foreground">
               Mapbox Access Token
             </label>
             <div className="relative">
@@ -91,22 +92,22 @@ export function SettingsPage() {
                 type={showKeys.mapbox ? 'text' : 'password'}
                 value={apiKeys.mapbox}
                 onChange={(e) => setApiKeys(prev => ({ ...prev, mapbox: e.target.value }))}
-                className="w-full px-4 py-3 pr-12 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white outline-none focus:border-purple-500/50 transition-colors font-mono text-sm"
+                className="w-full rounded-xl border border-input bg-background py-3 pl-4 pr-12 font-mono text-sm text-foreground outline-none transition-colors focus:border-primary"
                 placeholder="Enter Mapbox token"
               />
               <button
                 onClick={() => toggleKeyVisibility('mapbox')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
               >
                 {showKeys.mapbox ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
-            <p className="text-xs text-slate-500 mt-2">Used for satellite imagery and maps</p>
+            <p className="mt-2 text-xs text-muted-foreground">Used for satellite imagery and maps</p>
           </div>
 
           {/* Planet API Key */}
-          <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700/50">
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <label className="mb-2 block text-sm font-medium text-foreground">
               Planet Labs API Key
             </label>
             <div className="relative">
@@ -114,17 +115,17 @@ export function SettingsPage() {
                 type={showKeys.planet ? 'text' : 'password'}
                 value={apiKeys.planet}
                 onChange={(e) => setApiKeys(prev => ({ ...prev, planet: e.target.value }))}
-                className="w-full px-4 py-3 pr-12 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white outline-none focus:border-purple-500/50 transition-colors font-mono text-sm"
+                className="w-full rounded-xl border border-input bg-background py-3 pl-4 pr-12 font-mono text-sm text-foreground outline-none transition-colors focus:border-primary"
                 placeholder="Enter Planet API key"
               />
               <button
                 onClick={() => toggleKeyVisibility('planet')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
               >
                 {showKeys.planet ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
-            <p className="text-xs text-slate-500 mt-2">Used for high-resolution satellite imagery</p>
+            <p className="mt-2 text-xs text-muted-foreground">Used for high-resolution satellite imagery</p>
           </div>
         </motion.div>
 
@@ -136,32 +137,32 @@ export function SettingsPage() {
           className="space-y-4"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-              <Cpu className="w-5 h-5 text-white" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+              <Cpu className="w-5 h-5 text-primary-foreground" />
             </div>
-            <h2 className="text-xl font-bold text-white">Preferences</h2>
+            <h2 className="text-xl font-bold text-foreground">Preferences</h2>
           </div>
 
           {/* Theme */}
-          <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700/50">
-            <label className="block text-sm font-medium text-slate-300 mb-3">Theme</label>
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <label className="mb-3 block text-sm font-medium text-foreground">Theme</label>
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => setPreferences(prev => ({ ...prev, theme: 'dark' }))}
+                onClick={() => setTheme('dark')}
                 className={`px-4 py-3 rounded-xl border transition-all ${
-                  preferences.theme === 'dark'
-                    ? 'bg-blue-500/10 border-blue-500/50 text-blue-400'
-                    : 'bg-slate-900/50 border-slate-700/50 text-slate-400 hover:border-slate-600/50'
+                  theme === 'dark'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-background text-muted-foreground hover:border-primary/40'
                 }`}
               >
                 🌙 Dark
               </button>
               <button
-                onClick={() => setPreferences(prev => ({ ...prev, theme: 'light' }))}
+                onClick={() => setTheme('light')}
                 className={`px-4 py-3 rounded-xl border transition-all ${
-                  preferences.theme === 'light'
-                    ? 'bg-blue-500/10 border-blue-500/50 text-blue-400'
-                    : 'bg-slate-900/50 border-slate-700/50 text-slate-400 hover:border-slate-600/50'
+                  theme === 'light'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-background text-muted-foreground hover:border-primary/40'
                 }`}
               >
                 ☀️ Light
@@ -170,12 +171,12 @@ export function SettingsPage() {
           </div>
 
           {/* Language */}
-          <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700/50">
-            <label className="block text-sm font-medium text-slate-300 mb-2">Language</label>
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <label className="mb-2 block text-sm font-medium text-foreground">Language</label>
             <select
               value={preferences.language}
               onChange={(e) => setPreferences(prev => ({ ...prev, language: e.target.value }))}
-              className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white outline-none focus:border-blue-500/50 transition-colors"
+              className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground outline-none transition-colors focus:border-primary"
             >
               <option value="en">English</option>
               <option value="hi">हिंदी (Hindi)</option>
@@ -184,12 +185,12 @@ export function SettingsPage() {
           </div>
 
           {/* Default Area */}
-          <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700/50">
-            <label className="block text-sm font-medium text-slate-300 mb-2">Default Area</label>
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <label className="mb-2 block text-sm font-medium text-foreground">Default Area</label>
             <select
               value={preferences.defaultArea}
               onChange={(e) => setPreferences(prev => ({ ...prev, defaultArea: e.target.value }))}
-              className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white outline-none focus:border-blue-500/50 transition-colors"
+              className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground outline-none transition-colors focus:border-primary"
             >
               <option value="Pune City">Pune City</option>
               <option value="Kothrud">Kothrud</option>
@@ -200,23 +201,23 @@ export function SettingsPage() {
           </div>
 
           {/* Toggles */}
-          <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700/50 space-y-4">
+          <div className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
             <label className="flex items-center justify-between cursor-pointer">
-              <span className="text-sm font-medium text-slate-300">Auto-save queries</span>
+              <span className="text-sm font-medium text-foreground">Auto-save queries</span>
               <input
                 type="checkbox"
                 checked={preferences.autoSave}
                 onChange={(e) => setPreferences(prev => ({ ...prev, autoSave: e.target.checked }))}
-                className="w-5 h-5 rounded-lg bg-slate-900/50 border border-slate-700/50 text-blue-500 focus:ring-blue-500/50"
+                className="h-5 w-5 rounded border-input bg-background text-primary focus:ring-primary"
               />
             </label>
             <label className="flex items-center justify-between cursor-pointer">
-              <span className="text-sm font-medium text-slate-300">Enable notifications</span>
+              <span className="text-sm font-medium text-foreground">Enable notifications</span>
               <input
                 type="checkbox"
                 checked={preferences.notifications}
                 onChange={(e) => setPreferences(prev => ({ ...prev, notifications: e.target.checked }))}
-                className="w-5 h-5 rounded-lg bg-slate-900/50 border border-slate-700/50 text-blue-500 focus:ring-blue-500/50"
+                className="h-5 w-5 rounded border-input bg-background text-primary focus:ring-primary"
               />
             </label>
           </div>
@@ -234,7 +235,7 @@ export function SettingsPage() {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleSave}
-          className="px-8 py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-medium shadow-lg shadow-green-500/20 hover:shadow-green-500/40 transition-all flex items-center gap-2"
+          className="flex items-center gap-2 rounded-xl bg-primary px-8 py-3 font-medium text-primary-foreground shadow-sm transition-colors hover:bg-brand-hover"
         >
           <Save className="w-5 h-5" />
           Save Settings
