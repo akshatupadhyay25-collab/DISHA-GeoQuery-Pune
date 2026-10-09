@@ -1,0 +1,63 @@
+# DISHA Backend Requirements - Production Version
+# Includes real AI models and geospatial libraries
+
+# Core Web Framework
+fastapi
+uvicorn[standard]
+python-dotenv
+python-multipart
+
+# Database
+sqlalchemy
+aiosqlite
+
+# Data Validation
+pydantic
+pydantic-settings
+
+# Geospatial (critical for spatial operations)
+geopandas
+shapely
+pyproj
+fiona
+rasterio
+
+# Numerical Computing
+numpy
+pandas
+
+# Image Processing
+pillow
+opencv-python
+
+# HTTP Client
+httpx
+requests
+
+# Vector Search (for embedding similarity)
+faiss-cpu
+
+# AI/ML - Real Models
+torch
+torchvision
+open-clip-torch
+transformers
+sentence-transformers
+accelerate
+
+# Google Gemini API
+google-generativeai
+
+# PDF Generation
+reportlab
+jinja2
+
+# Utilities
+redis
+websockets
+tqdm
+
+# Optional: For GPU acceleration (install if you have NVIDIA GPU)
+# Uncomment the appropriate line for your CUDA version:
+# torch torchvision --index-url https://download.pytorch.org/whl/cu118
+# torch torchvision --index-url https://download.pytorch.org/whl/cu121
