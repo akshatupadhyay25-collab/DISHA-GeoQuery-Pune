@@ -75,6 +75,16 @@ async def process_natural_language_query(request: QueryRequest):
     - "Locate unpaved roads intersecting cleared forest patches"
     - "Show me tin-roof buildings near Kothrud"
     """
+    if not vlm_service.model_loaded:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Natural-language search is unavailable because this backend is using "
+                "simulated detections. Configure and load a real search model and data "
+                "source before searching."
+            ),
+        )
+
     try:
         result = query_service.process_query(
             user_query=request.query,
@@ -438,4 +448,3 @@ app.include_router(analysis_router)
 # ============ SIMULATION API ============
 from app.api.simulation import router as simulation_router
 app.include_router(simulation_router)
-

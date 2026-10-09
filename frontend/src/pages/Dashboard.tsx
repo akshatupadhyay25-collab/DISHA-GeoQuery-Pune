@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { MapView } from '../components/MapView';
 import { StatsCard } from '../components/StatsCard';
 import { RecentQueries } from '../components/RecentQueries';
@@ -7,9 +8,13 @@ import {
   Building2, 
   Route, 
   Droplets,
+  Search,
   TrendingUp,
-  Zap
+  ArrowUpRight,
+  Compass
 } from 'lucide-react';
+
+const MotionLink = motion(Link);
 
 export function Dashboard() {
   const stats = [
@@ -18,72 +23,89 @@ export function Dashboard() {
       label: 'Buildings', 
       value: '125,432', 
       change: '+2.3%',
-      color: 'from-blue-500 to-cyan-500',
-      bgColor: 'bg-blue-500/10',
-      borderColor: 'border-blue-500/20'
+      color: 'from-primary to-primary/70',
+      bgColor: 'bg-primary/10 text-primary',
+      borderColor: 'border-primary/20'
     },
     { 
       icon: Route, 
       label: 'Roads', 
       value: '58,234', 
       change: '+1.8%',
-      color: 'from-purple-500 to-pink-500',
-      bgColor: 'bg-purple-500/10',
-      borderColor: 'border-purple-500/20'
+      color: 'from-primary to-primary/70',
+      bgColor: 'bg-primary/10 text-primary',
+      borderColor: 'border-primary/20'
     },
     { 
       icon: Droplets, 
       label: 'Waterways', 
       value: '1,234', 
       change: '+0.5%',
-      color: 'from-green-500 to-emerald-500',
-      bgColor: 'bg-green-500/10',
-      borderColor: 'border-green-500/20'
+      color: 'from-status-success to-status-success/70',
+      bgColor: 'bg-status-success/10 text-status-success',
+      borderColor: 'border-status-success/20'
     },
     { 
       icon: MapPin, 
       label: 'POIs', 
       value: '8,567', 
       change: '+3.1%',
-      color: 'from-orange-500 to-red-500',
-      bgColor: 'bg-orange-500/10',
-      borderColor: 'border-orange-500/20'
+      color: 'from-status-success to-status-success/70',
+      bgColor: 'bg-status-success/10 text-status-success',
+      borderColor: 'border-status-success/20'
     },
   ];
 
   return (
-    <div className="h-full p-6 space-y-6 overflow-auto">
+    <div className="min-h-full space-y-7 overflow-auto p-5 sm:p-7 xl:p-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
+        className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
       >
         <div>
-          <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-          <p className="text-slate-400 mt-1">Welcome to DISHA GeoQuery Pune</p>
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+            <Compass className="h-4 w-4" />
+            <span>GeoAI workspace</span>
+            <span className="text-border">/</span>
+            <span className="text-muted-foreground">Pune region</span>
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Spatial intelligence</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+            Explore geospatial features, review recent searches, and launch an analysis.
+          </p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20">
-          <Zap className="w-4 h-4 text-green-400" />
-          <span className="text-sm text-green-400 font-medium">Real-time Data</span>
-        </div>
+        <Link
+          to="/query"
+          className="inline-flex w-fit shrink-0 items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:brightness-105"
+        >
+          <Search className="h-4 w-4" />
+          New geospatial query
+          <ArrowUpRight className="h-4 w-4" />
+        </Link>
       </motion.div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => (
-          <StatsCard key={stat.label} {...stat} index={index} />
-        ))}
+      <div>
+        <div className="mb-3">
+          <h2 className="text-base font-semibold text-foreground">Pune at a glance</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">Coverage indicators</p>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {stats.map((stat, index) => (
+            <StatsCard key={stat.label} {...stat} index={index} />
+          ))}
+        </div>
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
         {/* Map */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
-          className="lg:col-span-2 h-[500px] rounded-2xl overflow-hidden border border-slate-700/50 shadow-2xl"
+          className="h-[420px] overflow-hidden rounded-2xl border border-border bg-card shadow-md shadow-slate-900/5 sm:h-[500px] xl:col-span-2"
         >
           <MapView />
         </motion.div>
@@ -93,7 +115,7 @@ export function Dashboard() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
-          className="h-[500px]"
+          className="h-[420px] min-h-0 sm:h-[500px]"
         >
           <RecentQueries />
         </motion.div>
@@ -104,27 +126,27 @@ export function Dashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="grid grid-cols-1 md:grid-cols-3 gap-4"
+        className="grid grid-cols-1 gap-4 md:grid-cols-3"
       >
         <QuickAction
           title="Natural Language Query"
           description="Search infrastructure using plain English"
-          icon={TrendingUp}
-          color="from-blue-500 to-cyan-500"
+          icon={Search}
+          color="from-primary to-primary/70"
           href="/query"
         />
         <QuickAction
           title="Temporal Analysis"
           description="Detect changes between time periods"
           icon={TrendingUp}
-          color="from-purple-500 to-pink-500"
+          color="from-primary to-primary/70"
           href="/analysis"
         />
         <QuickAction
           title="Flood Simulation"
           description="Simulate flood scenarios"
           icon={Droplets}
-          color="from-orange-500 to-red-500"
+          color="from-status-success to-status-success/70"
           href="/simulation"
         />
       </motion.div>
@@ -132,20 +154,31 @@ export function Dashboard() {
   );
 }
 
-function QuickAction({ title, description, icon: Icon, color, href }: any) {
+interface QuickActionProps {
+  title: string;
+  description: string;
+  icon: typeof Search;
+  color: string;
+  href: string;
+}
+
+function QuickAction({ title, description, icon: Icon, color, href }: QuickActionProps) {
   return (
-    <motion.a
-      href={href}
+    <MotionLink
+      to={href}
       whileHover={{ scale: 1.02, y: -4 }}
       whileTap={{ scale: 0.98 }}
-      className="group relative p-6 rounded-2xl bg-slate-800/50 border border-slate-700/50 hover:border-slate-600/50 transition-all duration-300 overflow-hidden"
+      className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
     >
-      <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 group-hover:opacity-10 transition-opacity`} />
-      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center mb-4 shadow-lg`}>
-        <Icon className="w-6 h-6 text-white" />
+      <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 transition-opacity group-hover:opacity-[0.06]`} />
+      <div className={`mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${color} shadow-sm`}>
+        <Icon className="h-5 w-5 text-primary-foreground" />
       </div>
-      <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
-      <p className="text-sm text-slate-400">{description}</p>
-    </motion.a>
+      <h3 className="mb-1 flex items-center gap-2 text-base font-semibold text-foreground">
+        {title}
+        <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />
+      </h3>
+      <p className="text-sm text-muted-foreground">{description}</p>
+    </MotionLink>
   );
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { MapView } from '../components/MapView';
-import { Calendar, TrendingUp, Play, BarChart3 } from 'lucide-react';
+import { Calendar, TrendingUp, Play, BarChart3, type LucideIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export function AnalysisPage() {
@@ -39,8 +39,8 @@ export function AnalysisPage() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-3xl font-bold text-white mb-2">Temporal Analysis</h1>
-        <p className="text-slate-400">Detect changes between time periods</p>
+        <h1 className="mb-2 text-3xl font-bold tracking-tight text-foreground">Temporal Analysis</h1>
+        <p className="text-muted-foreground">Detect changes between time periods</p>
       </motion.div>
 
       {/* Controls */}
@@ -48,43 +48,43 @@ export function AnalysisPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 rounded-2xl bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm"
+        className="grid grid-cols-1 gap-4 rounded-2xl border border-border bg-card p-6 shadow-sm md:grid-cols-4"
       >
         {/* Start Date */}
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Start Date</label>
+          <label className="mb-2 block text-sm font-medium text-foreground">Start Date</label>
           <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Calendar className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white outline-none focus:border-green-500/50 transition-colors"
+              className="w-full rounded-xl border border-input bg-background py-3 pl-11 pr-4 text-foreground outline-none transition-colors focus:border-primary"
             />
           </div>
         </div>
 
         {/* End Date */}
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">End Date</label>
+          <label className="mb-2 block text-sm font-medium text-foreground">End Date</label>
           <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Calendar className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white outline-none focus:border-green-500/50 transition-colors"
+              className="w-full rounded-xl border border-input bg-background py-3 pl-11 pr-4 text-foreground outline-none transition-colors focus:border-primary"
             />
           </div>
         </div>
 
         {/* Area */}
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Area</label>
+          <label className="mb-2 block text-sm font-medium text-foreground">Area</label>
           <select
             value={area}
             onChange={(e) => setArea(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white outline-none focus:border-green-500/50 transition-colors"
+            className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground outline-none transition-colors focus:border-primary"
           >
             <option value="Pune City">Pune City</option>
             <option value="Kothrud">Kothrud</option>
@@ -101,7 +101,7 @@ export function AnalysisPage() {
             whileTap={{ scale: 0.95 }}
             onClick={handleAnalyze}
             disabled={isAnalyzing}
-            className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground shadow-sm transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Play className="w-5 h-5" />
             {isAnalyzing ? 'Analyzing...' : 'Analyze'}
@@ -116,7 +116,7 @@ export function AnalysisPage() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
-          className="lg:col-span-2 rounded-2xl overflow-hidden border border-slate-700/50 shadow-2xl"
+          className="lg:col-span-2 overflow-hidden rounded-2xl border border-border bg-card shadow-lg shadow-slate-900/5"
         >
           <MapView />
         </motion.div>
@@ -126,12 +126,12 @@ export function AnalysisPage() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
-          className="flex flex-col bg-slate-800/50 border border-slate-700/50 rounded-2xl overflow-hidden"
+          className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
         >
           {/* Header */}
-          <div className="p-6 border-b border-slate-700/50">
-            <h2 className="text-xl font-bold text-white mb-2">Change Detection</h2>
-            <p className="text-sm text-slate-400">
+          <div className="border-b border-border p-6">
+            <h2 className="mb-2 text-xl font-bold text-foreground">Change Detection</h2>
+            <p className="text-sm text-muted-foreground">
               {startDate} to {endDate}
             </p>
           </div>
@@ -141,8 +141,8 @@ export function AnalysisPage() {
             {!results ? (
               <div className="h-full flex items-center justify-center text-center">
                 <div>
-                  <BarChart3 className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                  <p className="text-slate-400">Run analysis to see results</p>
+                  <BarChart3 className="mx-auto mb-3 h-12 w-12 text-muted-foreground" />
+                  <p className="text-muted-foreground">Run analysis to see results</p>
                 </div>
               </div>
             ) : (
@@ -150,25 +150,21 @@ export function AnalysisPage() {
                 <StatCard
                   label="New Constructions"
                   value={results.newConstructions || 0}
-                  color="from-green-500 to-emerald-500"
                   icon={TrendingUp}
                 />
                 <StatCard
                   label="Demolitions"
                   value={results.demolitions || 0}
-                  color="from-red-500 to-orange-500"
                   icon={TrendingUp}
                 />
                 <StatCard
                   label="Vegetation Change"
                   value={`${results.vegetationChange || 0}%`}
-                  color="from-blue-500 to-cyan-500"
                   icon={TrendingUp}
                 />
                 <StatCard
                   label="Infrastructure Growth"
                   value={`${results.infrastructureGrowth || 0}%`}
-                  color="from-purple-500 to-pink-500"
                   icon={TrendingUp}
                 />
               </>
@@ -180,19 +176,19 @@ export function AnalysisPage() {
   );
 }
 
-function StatCard({ label, value, color, icon: Icon }: any) {
+function StatCard({ label, value, icon: Icon }: { label: string; value: number | string; icon: LucideIcon }) {
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
-      className="p-4 rounded-xl bg-slate-900/50 border border-slate-700/50"
+      className="rounded-xl border border-border bg-background p-4"
     >
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm text-slate-400">{label}</span>
-        <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${color} flex items-center justify-center`}>
-          <Icon className="w-4 h-4 text-white" />
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">{label}</span>
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Icon className="h-4 w-4" />
         </div>
       </div>
-      <p className="text-2xl font-bold text-white">{value}</p>
+      <p className="text-2xl font-bold text-foreground">{value}</p>
     </motion.div>
   );
 }

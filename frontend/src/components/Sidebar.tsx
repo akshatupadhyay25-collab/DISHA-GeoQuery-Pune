@@ -74,14 +74,14 @@ function ChatTab() {
             <div
               className={`rounded-lg px-3 py-2.5 text-sm ${
                 msg.type === 'user'
-                  ? 'bg-brand text-white'
+                  ? 'bg-brand text-primary-foreground'
                   : 'bg-sidebar-surface text-sidebar-text border border-sidebar-border'
               }`}
             >
               {msg.type === 'assistant' && (
                 <div className="flex items-center gap-1.5 mb-1.5 pb-1.5 border-b border-sidebar-border">
                   <div className="w-4 h-4 rounded-full bg-brand flex items-center justify-center">
-                    <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-2.5 h-2.5 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
                   </div>
@@ -94,13 +94,13 @@ function ChatTab() {
                 <div className="mt-2 pt-2 border-t border-sidebar-border flex gap-2">
                   <a
                     href={api.getGeoJsonUrl(msg.query_id)}
-                    className="text-xs text-brand-light hover:text-white transition-smooth"
+                    className="text-xs text-primary-foreground/80 hover:text-primary-foreground transition-smooth"
                   >
                     📥 GeoJSON
                   </a>
                   <a
                     href={api.getReportUrl(msg.query_id)}
-                    className="text-xs text-brand-light hover:text-white transition-smooth"
+                    className="text-xs text-primary-foreground/80 hover:text-primary-foreground transition-smooth"
                   >
                     📄 Report
                   </a>
@@ -222,7 +222,7 @@ function ToolsTab() {
           <button
             onClick={runFloodSimulation}
             disabled={isRunning}
-            className="w-full bg-status-info hover:bg-status-info/90 disabled:opacity-50 rounded-lg py-2.5 text-xs font-medium text-white transition-smooth"
+            className="w-full bg-status-info hover:bg-status-info/90 disabled:opacity-50 rounded-lg py-2.5 text-xs font-medium text-status-info-foreground transition-smooth"
           >
             {isRunning ? '⏳ Simulating...' : '▶ Run Simulation'}
           </button>
@@ -279,7 +279,7 @@ function ToolsTab() {
           <button
             onClick={runTemporalAnalysis}
             disabled={isRunning}
-            className="w-full bg-status-warning hover:bg-status-warning/90 disabled:opacity-50 rounded-lg py-2.5 text-xs font-medium text-white transition-smooth"
+            className="w-full bg-status-warning hover:bg-status-warning/90 disabled:opacity-50 rounded-lg py-2.5 text-xs font-medium text-status-warning-foreground transition-smooth"
           >
             {isRunning ? '⏳ Analyzing...' : '▶ Detect Changes'}
           </button>

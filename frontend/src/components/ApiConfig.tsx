@@ -97,7 +97,7 @@ export function ApiConfig({ onClose }: ConfigProps) {
             </button>
             <button
               onClick={handleSave}
-              className="flex-1 px-4 py-2.5 rounded-lg bg-brand hover:bg-brand-hover text-white transition-smooth text-sm font-medium"
+              className="flex-1 px-4 py-2.5 rounded-lg bg-brand hover:bg-brand-hover text-primary-foreground transition-smooth text-sm font-medium"
             >
               {saved ? '✓ Saved!' : 'Save Configuration'}
             </button>

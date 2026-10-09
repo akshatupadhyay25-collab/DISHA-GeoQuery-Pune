@@ -38,8 +38,8 @@ export function SimulationPage() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-3xl font-bold text-white mb-2">Flood Simulation</h1>
-        <p className="text-slate-400">Simulate flood scenarios and assess risk</p>
+        <h1 className="mb-2 text-3xl font-bold tracking-tight text-foreground">Flood Simulation</h1>
+        <p className="text-muted-foreground">Simulate flood scenarios and assess risk</p>
       </motion.div>
 
       {/* Controls */}
@@ -47,15 +47,15 @@ export function SimulationPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 rounded-2xl bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm"
+        className="grid grid-cols-1 gap-4 rounded-2xl border border-border bg-card p-6 shadow-sm md:grid-cols-3"
       >
         {/* River Selection */}
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">River</label>
+          <label className="mb-2 block text-sm font-medium text-foreground">River</label>
           <select
             value={river}
             onChange={(e) => setRiver(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white outline-none focus:border-orange-500/50 transition-colors"
+            className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground outline-none transition-colors focus:border-primary"
           >
             <option value="Mula River">Mula River</option>
             <option value="Mutha River">Mutha River</option>
@@ -65,7 +65,7 @@ export function SimulationPage() {
 
         {/* Water Level */}
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
+          <label className="mb-2 block text-sm font-medium text-foreground">
             Water Level: {waterLevel}m
           </label>
           <input
@@ -75,7 +75,7 @@ export function SimulationPage() {
             step="0.5"
             value={waterLevel}
             onChange={(e) => setWaterLevel(parseFloat(e.target.value))}
-            className="w-full h-3 rounded-xl bg-slate-900/50 border border-slate-700/50 outline-none focus:border-orange-500/50 transition-colors"
+            className="h-3 w-full rounded-xl border border-input bg-muted outline-none accent-primary focus:border-primary"
           />
         </div>
 
@@ -86,7 +86,7 @@ export function SimulationPage() {
             whileTap={{ scale: 0.95 }}
             onClick={handleSimulate}
             disabled={isSimulating}
-            className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white font-medium shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground shadow-sm transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Play className="w-5 h-5" />
             {isSimulating ? 'Simulating...' : 'Simulate'}
@@ -101,7 +101,7 @@ export function SimulationPage() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
-          className="lg:col-span-2 rounded-2xl overflow-hidden border border-slate-700/50 shadow-2xl"
+          className="lg:col-span-2 overflow-hidden rounded-2xl border border-border bg-card shadow-lg shadow-slate-900/5"
         >
           <MapView />
         </motion.div>
@@ -111,12 +111,12 @@ export function SimulationPage() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
-          className="flex flex-col bg-slate-800/50 border border-slate-700/50 rounded-2xl overflow-hidden"
+          className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
         >
           {/* Header */}
-          <div className="p-6 border-b border-slate-700/50">
-            <h2 className="text-xl font-bold text-white mb-2">Risk Assessment</h2>
-            <p className="text-sm text-slate-400">
+          <div className="border-b border-border p-6">
+            <h2 className="mb-2 text-xl font-bold text-foreground">Risk Assessment</h2>
+            <p className="text-sm text-muted-foreground">
               {river} - {waterLevel}m water level
             </p>
           </div>
@@ -126,8 +126,8 @@ export function SimulationPage() {
             {!results ? (
               <div className="h-full flex items-center justify-center text-center">
                 <div>
-                  <CloudRain className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                  <p className="text-slate-400">Run simulation to assess risk</p>
+                  <CloudRain className="mx-auto mb-3 h-12 w-12 text-muted-foreground" />
+                  <p className="text-muted-foreground">Run simulation to assess risk</p>
                 </div>
               </div>
             ) : (
@@ -135,61 +135,61 @@ export function SimulationPage() {
                 {/* High Risk */}
                 <motion.div
                   whileHover={{ scale: 1.02 }}
-                  className="p-4 rounded-xl bg-red-500/10 border border-red-500/20"
+                  className="rounded-xl border border-status-error/25 bg-status-error/10 p-4"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-5 h-5 text-red-400" />
-                      <span className="text-sm font-medium text-red-400">High Risk</span>
+                      <AlertTriangle className="h-5 w-5 text-status-error" />
+                      <span className="text-sm font-medium text-status-error">High Risk</span>
                     </div>
-                    <span className="text-2xl font-bold text-red-400">{results.highRisk || 0}</span>
+                    <span className="text-2xl font-bold text-status-error">{results.highRisk || 0}</span>
                   </div>
-                  <p className="text-xs text-slate-400">Buildings in immediate danger</p>
+                  <p className="text-xs text-muted-foreground">Buildings in immediate danger</p>
                 </motion.div>
 
                 {/* Medium Risk */}
                 <motion.div
                   whileHover={{ scale: 1.02 }}
-                  className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20"
+                  className="rounded-xl border border-status-warning/25 bg-status-warning/10 p-4"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-5 h-5 text-orange-400" />
-                      <span className="text-sm font-medium text-orange-400">Medium Risk</span>
+                      <AlertTriangle className="h-5 w-5 text-status-warning" />
+                      <span className="text-sm font-medium text-status-warning">Medium Risk</span>
                     </div>
-                    <span className="text-2xl font-bold text-orange-400">{results.mediumRisk || 0}</span>
+                    <span className="text-2xl font-bold text-status-warning">{results.mediumRisk || 0}</span>
                   </div>
-                  <p className="text-xs text-slate-400">Buildings at moderate risk</p>
+                  <p className="text-xs text-muted-foreground">Buildings at moderate risk</p>
                 </motion.div>
 
                 {/* Affected Population */}
                 <motion.div
                   whileHover={{ scale: 1.02 }}
-                  className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20"
+                  className="rounded-xl border border-status-info/25 bg-status-info/10 p-4"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <Users className="w-5 h-5 text-blue-400" />
-                      <span className="text-sm font-medium text-blue-400">Population</span>
+                      <Users className="h-5 w-5 text-status-info" />
+                      <span className="text-sm font-medium text-status-info">Population</span>
                     </div>
-                    <span className="text-2xl font-bold text-blue-400">{results.affectedPopulation || 0}</span>
+                    <span className="text-2xl font-bold text-status-info">{results.affectedPopulation || 0}</span>
                   </div>
-                  <p className="text-xs text-slate-400">Estimated people affected</p>
+                  <p className="text-xs text-muted-foreground">Estimated people affected</p>
                 </motion.div>
 
                 {/* Total Buildings */}
                 <motion.div
                   whileHover={{ scale: 1.02 }}
-                  className="p-4 rounded-xl bg-slate-900/50 border border-slate-700/50"
+                  className="rounded-xl border border-border bg-background p-4"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <Home className="w-5 h-5 text-slate-400" />
-                      <span className="text-sm font-medium text-slate-400">Total Affected</span>
+                      <Home className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-sm font-medium text-muted-foreground">Total Affected</span>
                     </div>
-                    <span className="text-2xl font-bold text-white">{results.totalAffected || 0}</span>
+                    <span className="text-2xl font-bold text-foreground">{results.totalAffected || 0}</span>
                   </div>
-                  <p className="text-xs text-slate-400">Buildings in flood zone</p>
+                  <p className="text-xs text-muted-foreground">Buildings in flood zone</p>
                 </motion.div>
               </>
             )}

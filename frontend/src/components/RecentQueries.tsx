@@ -1,94 +1,65 @@
 import { motion } from 'framer-motion';
-import { Clock, MapPin, TrendingUp } from 'lucide-react';
-
-const mockQueries = [
-  {
-    id: 1,
-    query: 'Find schools near flood-prone areas',
-    timestamp: '2 mins ago',
-    results: 23,
-    status: 'success'
-  },
-  {
-    id: 2,
-    query: 'Hospitals within 5km of highways',
-    timestamp: '15 mins ago',
-    results: 47,
-    status: 'success'
-  },
-  {
-    id: 3,
-    query: 'Industrial zones near water bodies',
-    timestamp: '1 hour ago',
-    results: 12,
-    status: 'success'
-  },
-  {
-    id: 4,
-    query: 'Residential areas with high population density',
-    timestamp: '3 hours ago',
-    results: 156,
-    status: 'success'
-  },
-  {
-    id: 5,
-    query: 'Emergency services coverage analysis',
-    timestamp: '5 hours ago',
-    results: 34,
-    status: 'success'
-  }
-];
+import { Link } from 'react-router-dom';
+import { Clock, Search } from 'lucide-react';
+import { formatDistanceToNow, parseISO } from 'date-fns';
+import { useQueryStore } from '../stores/queryStore';
 
 export function RecentQueries() {
+  const history = useQueryStore((state) => state.history);
+  const recentQueries = history.slice(0, 5);
+
   return (
-    <div className="h-full flex flex-col bg-slate-800/50 border border-slate-700/50 rounded-2xl overflow-hidden">
-      {/* Header */}
-      <div className="p-6 border-b border-slate-700/50">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white">Recent Queries</h2>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="text-sm text-green-400 hover:text-green-300 font-medium"
-          >
-            View All
-          </motion.button>
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <div className="flex items-center justify-between border-b border-border p-5 sm:p-6">
+        <div>
+          <h2 className="text-lg font-bold text-foreground">Recent queries</h2>
+          <p className="mt-1 text-xs text-muted-foreground">Your latest searches</p>
         </div>
+        <Link to="/history" className="text-sm font-medium text-primary hover:underline">
+          View all
+        </Link>
       </div>
 
-      {/* Queries List */}
-      <div className="flex-1 overflow-auto p-4 space-y-3">
-        {mockQueries.map((query, index) => (
+      <div className="flex-1 space-y-3 overflow-auto p-4">
+        {recentQueries.map((query, index) => (
           <motion.div
             key={query.id}
-            initial={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: -12 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1 }}
-            whileHover={{ scale: 1.02, x: 4 }}
-            className="p-4 rounded-xl bg-slate-900/50 border border-slate-700/50 hover:border-slate-600/50 transition-all cursor-pointer group"
+            transition={{ delay: index * 0.06 }}
+            className="rounded-xl border border-border bg-background p-4 transition-colors hover:border-primary/30"
           >
-            <div className="flex items-start justify-between mb-2">
-              <p className="text-white font-medium text-sm flex-1 group-hover:text-green-400 transition-colors">
+            <div className="mb-2 flex items-start justify-between gap-3">
+              <p className="min-w-0 flex-1 text-sm font-medium leading-5 text-foreground">
                 {query.query}
               </p>
-              <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-green-500/10 text-green-400">
-                <TrendingUp className="w-3 h-3" />
-                <span className="text-xs font-medium">{query.results}</span>
-              </div>
+              <span className={`shrink-0 rounded-lg px-2 py-1 text-xs font-medium ${
+                query.status === 'completed'
+                  ? 'bg-status-success/10 text-status-success'
+                  : query.status === 'failed'
+                    ? 'bg-status-error/10 text-status-error'
+                    : 'bg-status-info/10 text-status-info'
+              }`}>
+                {query.status === 'completed' ? `${query.resultCount} results` : query.status}
+              </span>
             </div>
-            
-            <div className="flex items-center gap-4 text-xs text-slate-400">
-              <div className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                <span>{query.timestamp}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <MapPin className="w-3 h-3" />
-                <span>Pune Region</span>
-              </div>
+
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Clock className="h-3.5 w-3.5" />
+              <span>{formatDistanceToNow(parseISO(query.timestamp), { addSuffix: true })}</span>
             </div>
           </motion.div>
         ))}
+
+        {recentQueries.length === 0 && (
+          <div className="flex h-full min-h-48 flex-col items-center justify-center px-4 text-center">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Search className="h-5 w-5" />
+            </div>
+            <p className="text-sm font-medium text-foreground">No queries yet</p>
+            <p className="mt-1 text-xs text-muted-foreground">Your recent searches will appear here.</p>
+          </div>
+        )}
       </div>
     </div>
   );

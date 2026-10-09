@@ -2,6 +2,37 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+export interface NaturalLanguageQueryResponse {
+  query_id: string;
+  original_query: string;
+  parsed_query: Record<string, unknown>;
+  results: {
+    total_found: number;
+    detections: Array<{
+      id?: string;
+      tile_id?: string;
+      detection_class?: string;
+      name?: string;
+      type?: string;
+      confidence?: number;
+      center_lat?: number;
+      center_lon?: number;
+      bbox?: {
+        lat_min: number;
+        lat_max: number;
+        lon_min: number;
+        lon_max: number;
+      };
+      [key: string]: unknown;
+    }>;
+    [key: string]: unknown;
+  };
+  geojson?: Record<string, unknown>;
+  insights?: string;
+  processing_time_ms: number;
+  timestamp: string;
+}
+
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
@@ -12,6 +43,11 @@ const apiClient = axios.create({
 
 export const api = {
   // Search & Query
+  query: async (query: string): Promise<NaturalLanguageQueryResponse> => {
+    const response = await apiClient.post<NaturalLanguageQueryResponse>('/api/query', { query });
+    return response.data;
+  },
+
   search: async (params: {
     query: string;
     latitude: number;
@@ -30,7 +66,7 @@ export const api = {
 
   // Map
   getMapConfig: async () => {
-    const response = await apiClient.get('/api/map/config');
+    const response = await apiClient.get('/api/map/config', { timeout: 5000 });
     return response.data;
   },
 

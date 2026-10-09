@@ -1,83 +1,196 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Sparkles, TrendingUp, Building, Droplets, Leaf, Navigation } from 'lucide-react';
-import { PromptInput } from '@/components/ui/ai-chat-input';
+import { FormEvent, useEffect, useState } from 'react';
+import {
+  AlertCircle,
+  ArrowUpRight,
+  CheckCircle2,
+  Clock3,
+  Loader2,
+  LocateFixed,
+  MapPin,
+  Search,
+  Sparkles,
+} from 'lucide-react';
 import { MapView } from '@/components/MapView';
-import { api } from '@/services/api';
+import { api, type NaturalLanguageQueryResponse } from '@/services/api';
+import { useAppStore } from '@/store/useAppStore';
 import { useQueryStore } from '@/stores/queryStore';
-import toast from 'react-hot-toast';
+import type { Detection, QueryResult } from '@/types';
+import axios from 'axios';
 
-const QueryPage = () => {
-  const { setCurrentQuery, addToHistory } = useQueryStore();
-  const [querySubmitted, setQuerySubmitted] = useState(false);
+const EXAMPLE_QUERIES = [
+  'Find schools near Kothrud.',
+  'Find buildings within 200 meters of the Mula River.',
+  'Show construction changes in Baner between 2022 and 2025.',
+  'Find water bodies in Pune.',
+];
+
+function getResultCoordinates(detection: Detection): [number, number] | null {
+  const latitude = typeof detection.center_lat === 'number'
+    ? detection.center_lat
+    : typeof detection.coordinates?.[1] === 'number'
+      ? detection.coordinates[1]
+      : undefined;
+  const longitude = typeof detection.center_lon === 'number'
+    ? detection.center_lon
+    : typeof detection.coordinates?.[0] === 'number'
+      ? detection.coordinates[0]
+      : undefined;
+
+  if (
+    typeof latitude === 'number' &&
+    typeof longitude === 'number' &&
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    latitude >= -90 &&
+    latitude <= 90 &&
+    longitude >= -180 &&
+    longitude <= 180
+  ) {
+    return [latitude, longitude];
+  }
+
+  const bbox = detection.bbox;
+  if (
+    bbox &&
+    [bbox.lat_min, bbox.lat_max, bbox.lon_min, bbox.lon_max].every(
+      (coordinate: unknown) => typeof coordinate === 'number' && Number.isFinite(coordinate),
+    )
+  ) {
+    const centerLat = (bbox.lat_min + bbox.lat_max) / 2;
+    const centerLon = (bbox.lon_min + bbox.lon_max) / 2;
+    if (centerLat >= -90 && centerLat <= 90 && centerLon >= -180 && centerLon <= 180) {
+      return [centerLat, centerLon];
+    }
+  }
+
+  return null;
+}
+
+function getQueryErrorMessage(error: unknown): string {
+  if (!axios.isAxiosError(error)) {
+    return 'The query could not be completed. Please try again.';
+  }
+
+  if (error.response?.status === 503) {
+    const detail = error.response.data?.detail;
+    return typeof detail === 'string'
+      ? detail
+      : 'The DISHA search service is not configured with a real search model and data source yet.';
+  }
+
+  if (error.response?.status === 400 || error.response?.status === 422) {
+    const detail = error.response.data?.detail;
+    return typeof detail === 'string'
+      ? detail
+      : 'DISHA could not understand this query. Try naming an infrastructure type and a Pune location.';
+  }
+
+  if (error.response?.status === 401 || error.response?.status === 403) {
+    return 'The search service rejected this request because its backend credentials or permissions are not configured. Configure credentials on the backend; do not add API keys to frontend code.';
+  }
+
+  if (!error.response) {
+    return 'Could not reach the DISHA backend. Check that the backend is running and that VITE_API_URL points to it.';
+  }
+
+  return 'The DISHA search request failed. Please try again, or check the backend logs for details.';
+}
+
+function normalizeDetections(response: NaturalLanguageQueryResponse): Detection[] {
+  const detections = Array.isArray(response.results?.detections)
+    ? response.results.detections
+    : [];
+
+  return detections.map((detection, index) => ({
+    ...detection,
+    id: detection.id || `${response.query_id}-${index}`,
+    type: detection.type || detection.detection_class || 'feature',
+    name: detection.name || detection.detection_class || `Result ${index + 1}`,
+  }));
+}
+
+function toQueryResult(
+  response: NaturalLanguageQueryResponse,
+  detections: Detection[],
+): QueryResult {
+  const total = typeof response.results?.total_found === 'number'
+    ? response.results.total_found
+    : detections.length;
+
+  return {
+    id: response.query_id,
+    query_id: response.query_id,
+    query: response.original_query,
+    timestamp: response.timestamp,
+    total_found: total,
+    processing_time_ms: response.processing_time_ms,
+    parsed_query: response.parsed_query,
+    insights: response.insights,
+    geojson: response.geojson,
+    results: {
+      ...response.results,
+      detections,
+      count: total,
+    },
+  };
+}
+
+export function QueryPage() {
+  const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<any[]>([]);
-  const [telemetry, setTelemetry] = useState<any>(null);
-  const [currentInput, setCurrentInput] = useState('');
-  const [_mapData, setMapData] = useState<any>(null);
+  const [progressMessage, setProgressMessage] = useState('');
+  const [detections, setDetections] = useState<Detection[]>([]);
+  const [response, setResponse] = useState<NaturalLanguageQueryResponse | null>(null);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [locationMessage, setLocationMessage] = useState('');
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [focusLocation, setFocusLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const { setCurrentQuery, setSelectedDetection } = useAppStore();
+  const { addToHistory } = useQueryStore();
 
-  const suggestedPrompts = [
-    {
-      icon: Search,
-      label: 'Find all schools',
-      description: 'Locate educational institutions in Pune',
-    },
-    {
-      icon: Building,
-      label: 'Analyze urban growth',
-      description: 'Study development patterns over time',
-    },
-    {
-      icon: Droplets,
-      label: 'Map water bodies',
-      description: 'Identify lakes, rivers, and reservoirs',
-    },
-    {
-      icon: Leaf,
-      label: 'Green cover analysis',
-      description: 'Assess vegetation and parks',
-    },
-  ];
+  useEffect(() => {
+    if (!loading) return;
+    setProgressMessage('Sending your query to the DISHA search service...');
+    const timer = window.setTimeout(() => {
+      setProgressMessage('The search service is still processing your request...');
+    }, 2500);
+    return () => window.clearTimeout(timer);
+  }, [loading]);
 
-  const handleSubmit = async (query: string, meta: { model: string; effort: string; attachments: File[] }) => {
-    if (!query.trim()) return;
+  const handleSearch = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const submittedQuery = query.trim();
+    if (!submittedQuery || loading) return;
 
     setLoading(true);
-    setQuerySubmitted(true);
-    setCurrentQuery({ query, timestamp: new Date() });
+    setErrorMessage('');
+    setResponse(null);
+    setDetections([]);
+    setCurrentQuery(null);
 
     try {
-      // Call the search API
-      const response = await api.search({
-        query: query,
-        latitude: 18.5204,
-        longitude: 73.8567,
-        radius: 10000,
-        useAI: true,
-      });
+      const result = await api.query(submittedQuery);
+      const returnedDetections = normalizeDetections(result);
+      const normalizedResult = toQueryResult(result, returnedDetections);
 
-      setResults(response.results || []);
-      setTelemetry(response.telemetry || null);
-      setMapData(response.mapData || null);
-
-      // Add to history
+      setResponse(result);
+      setDetections(returnedDetections);
+      setCurrentQuery(normalizedResult);
       addToHistory({
-        id: Date.now().toString(),
-        query: query,
-        timestamp: new Date().toISOString(),
-        resultCount: response.results?.length || 0,
+        id: result.query_id || `${Date.now()}`,
+        query: submittedQuery,
+        timestamp: result.timestamp || new Date().toISOString(),
+        resultCount: typeof result.results?.total_found === 'number'
+          ? result.results.total_found
+          : returnedDetections.length,
         status: 'completed',
       });
-
-      toast.success(`Found ${response.results?.length || 0} results`);
-    } catch (error: any) {
-      console.error('Search error:', error);
-      toast.error(error.message || 'Failed to execute query');
-      
-      // Add failed query to history
+    } catch (error: unknown) {
+      const message = getQueryErrorMessage(error);
+      setErrorMessage(message);
       addToHistory({
-        id: Date.now().toString(),
-        query: query,
+        id: `${Date.now()}`,
+        query: submittedQuery,
         timestamp: new Date().toISOString(),
         resultCount: 0,
         status: 'failed',
@@ -87,294 +200,277 @@ const QueryPage = () => {
     }
   };
 
-  const handleReset = () => {
-    setQuerySubmitted(false);
-    setResults([]);
-    setTelemetry(null);
-    setMapData(null);
-    setCurrentInput('');
+  const handleUseMyLocation = () => {
+    setLocationMessage('');
+    if (!navigator.geolocation) {
+      setLocationMessage('Location is unavailable in this browser.');
+      return;
+    }
+
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setFocusLocation({ lat: coords.latitude, lon: coords.longitude });
+        setLocationMessage('Map centered on your current location.');
+        setLocationLoading(false);
+      },
+      (positionError) => {
+        const messages: Record<number, string> = {
+          1: 'Location permission was denied. Allow location access in your browser settings and try again.',
+          2: 'Your current location could not be determined. Check your device location settings and retry.',
+          3: 'The location request timed out. Please try again.',
+        };
+        setLocationMessage(
+          messages[positionError.code] || 'Unable to retrieve your location. Please try again.',
+        );
+        setLocationLoading(false);
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 },
+    );
   };
 
+  const resultCount = response
+    ? typeof response.results?.total_found === 'number'
+      ? response.results.total_found
+      : detections.length
+    : 0;
+
   return (
-    <div className="relative h-full w-full overflow-hidden bg-background">
-      {/* Background Map - appears after query submission */}
-      <AnimatePresence>
-        {querySubmitted && (
-          <motion.div
-            initial={{ opacity: 0, scale: 1.1 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="absolute inset-0 z-0"
-          >
-            <MapView />
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <div className="min-h-full bg-background p-4 text-foreground sm:p-6">
+      <div className="mx-auto flex max-w-[1600px] flex-col gap-5">
+        <header>
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+            <Sparkles className="h-3.5 w-3.5" />
+            NATURAL-LANGUAGE GEOSEARCH
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Ask DISHA about Pune</h1>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground sm:text-base">
+            Describe the infrastructure or area you want to explore. Results and map locations come from the search service.
+          </p>
+        </header>
 
-      {/* Content Layer */}
-      <div className="relative z-10 h-full">
-        {/* Search Bar - animates from center to top-left */}
-        <motion.div
-          initial={false}
-          animate={
-            querySubmitted
-              ? {
-                  position: 'absolute',
-                  top: '24px',
-                  left: '24px',
-                  right: 'auto',
-                  width: 'auto',
-                  maxWidth: '640px',
-                }
-              : {
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  right: 'auto',
-                  width: '100%',
-                  maxWidth: '640px',
-                  x: '-50%',
-                  y: '-50%',
-                }
-          }
-          transition={{
-            type: 'spring',
-            stiffness: 100,
-            damping: 20,
-            duration: 0.6,
-          }}
-          className="w-full"
-          style={
-            querySubmitted
-              ? { transform: 'none' }
-              : { transform: 'translate(-50%, -50%)' }
-          }
-        >
-          <PromptInput
-            onSubmit={handleSubmit}
-            placeholder="Ask DISHA anything about Pune..."
-            className={querySubmitted ? 'w-[640px]' : 'w-full max-w-[640px]'}
-            value={currentInput}
-            onChange={setCurrentInput}
-          />
-        </motion.div>
-
-        {/* Suggested Prompts - only show before query submission */}
-        <AnimatePresence>
-          {!querySubmitted && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ delay: 0.3, duration: 0.4 }}
-              className="absolute top-[60%] left-1/2 -translate-x-1/2 w-full max-w-3xl px-6"
+        <div className="grid min-h-[640px] grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(340px,0.72fr)_minmax(0,1.75fr)]">
+          <section className="flex min-h-0 flex-col gap-4">
+            <form
+              onSubmit={handleSearch}
+              className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5"
             >
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-8">
-                {suggestedPrompts.map((prompt, index) => (
-                  <motion.button
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 + index * 0.1 }}
-                    onClick={() => setCurrentInput(prompt.label)}
-                    className="group p-4 rounded-lg bg-card/80 backdrop-blur-md border border-border/50 hover:border-primary/50 hover:bg-card transition-all text-left"
+              <label htmlFor="disha-query" className="mb-2 block text-sm font-semibold">
+                What are you looking for?
+              </label>
+              <textarea
+                id="disha-query"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="For example, find schools near Kothrud..."
+                rows={4}
+                maxLength={1000}
+                disabled={loading}
+                className="w-full resize-y rounded-xl border border-input bg-background px-4 py-3 text-sm leading-6 text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+              />
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                <span className="text-xs text-muted-foreground">
+                  Use a place name or describe a spatial relationship.
+                </span>
+                <button
+                  type="submit"
+                  disabled={!query.trim() || loading}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {loading
+                    ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    : <Search className="h-4 w-4" aria-hidden="true" />}
+                  {loading ? 'Searching...' : 'Search'}
+                </button>
+              </div>
+            </form>
+
+            <section className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+              <h2 className="text-sm font-semibold">Try an example</h2>
+              <div className="mt-3 grid gap-2">
+                {EXAMPLE_QUERIES.map((example, index) => (
+                  <button
+                    key={example}
+                    type="button"
+                    onClick={() => setQuery(example)}
+                    disabled={loading}
+                    className="group flex w-full items-start gap-3 rounded-xl border border-border bg-background px-3 py-3 text-left text-sm text-foreground transition hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    <prompt.icon className="h-5 w-5 text-primary mb-2 group-hover:scale-110 transition-transform" />
-                    <div className="text-sm font-medium text-foreground mb-1">
-                      {prompt.label}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {prompt.description}
-                    </div>
-                  </motion.button>
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-semibold text-primary">
+                      {index + 1}
+                    </span>
+                    <span className="flex-1 leading-5">{example}</span>
+                    <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition group-hover:text-primary" />
+                  </button>
                 ))}
               </div>
+            </section>
 
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.8 }}
-                className="text-center mt-8"
-              >
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm text-primary">
-                  <Sparkles className="h-4 w-4" />
-                  Powered by SkyCLIP, OWL-ViT, Gemini, and SegFormer
+            <section className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-semibold">Search area</h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Use your device location to center the map. Location is requested only on click.
+                  </p>
                 </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                <button
+                  type="button"
+                  onClick={handleUseMyLocation}
+                  disabled={locationLoading}
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-border bg-background px-3.5 py-2 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-wait disabled:opacity-60"
+                >
+                  {locationLoading
+                    ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    : <LocateFixed className="h-4 w-4" aria-hidden="true" />}
+                  Use My Location
+                </button>
+              </div>
+              {locationMessage && (
+                <p
+                  role="status"
+                  className={`mt-3 flex items-start gap-2 text-xs ${
+                    locationMessage.startsWith('Map centered')
+                      ? 'text-status-success'
+                      : 'text-status-warning'
+                  }`}
+                >
+                  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  {locationMessage}
+                </p>
+              )}
+            </section>
 
-        {/* Results Panel - appears after query submission */}
-        <AnimatePresence>
-          {querySubmitted && results.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, x: -100 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3, duration: 0.4 }}
-              className="absolute top-24 left-6 w-80 max-h-[calc(100vh-140px)] overflow-y-auto"
+            <section
+              aria-live="polite"
+              aria-busy={loading}
+              className="min-h-32 flex-1 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5"
             >
-              <div className="rounded-lg bg-card/90 backdrop-blur-md border border-border/50 p-4 shadow-2xl">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    Results ({results.length})
-                  </h3>
-                  <button
-                    onClick={handleReset}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    New Query
-                  </button>
-                </div>
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold">Query results</h2>
+                {response && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-status-success/10 px-2.5 py-1 text-xs font-medium text-status-success">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    {resultCount} found
+                  </span>
+                )}
+              </div>
 
-                <div className="space-y-3">
-                  {results.slice(0, 10).map((result: any, index: number) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 + index * 0.05 }}
-                      className="p-3 rounded-md bg-background/50 border border-border/30 hover:border-primary/50 transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-start gap-2">
-                        <Navigation className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-foreground truncate">
-                            {result.name || `Result ${index + 1}`}
-                          </div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {result.type || 'Location'}
-                          </div>
-                          {result.coordinates && (
-                            <div className="text-xs text-muted-foreground/70 mt-1 font-mono">
-                              {result.coordinates[1].toFixed(4)}, {result.coordinates[0].toFixed(4)}
-                            </div>
+              {loading && (
+                <div className="mt-5 flex items-start gap-3 text-sm text-muted-foreground">
+                  <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-primary" />
+                  <div>
+                    <p className="font-medium text-foreground">{progressMessage}</p>
+                    <p className="mt-1 text-xs">Waiting for the backend response; no results are assumed before it returns.</p>
+                  </div>
+                </div>
+              )}
+
+              {!loading && errorMessage && (
+                <div role="alert" className="mt-4 flex items-start gap-3 rounded-xl border border-status-error/25 bg-status-error/5 p-3 text-sm text-status-error">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <p>{errorMessage}</p>
+                </div>
+              )}
+
+              {!loading && response && detections.length === 0 && (
+                <div className="mt-5 flex items-start gap-3 text-sm text-muted-foreground">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <p>The service returned no detections for this query. The map has not been moved to a result location.</p>
+                </div>
+              )}
+
+              {!loading && response && detections.length > 0 && (
+                <div className="mt-4 max-h-[360px] space-y-2 overflow-y-auto pr-1">
+                  {detections.map((detection, index) => {
+                    const coordinates = getResultCoordinates(detection);
+                    const content = (
+                      <div className="flex items-start gap-3">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <MapPin className="h-4 w-4" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="truncate text-left text-sm font-medium">
+                            {detection.name || detection.detection_class || detection.type || `Result ${index + 1}`}
+                          </h3>
+                          {typeof detection.confidence === 'number' && (
+                            <p className="mt-1 text-left text-xs text-muted-foreground">
+                              Service confidence: {(detection.confidence * 100).toFixed(1)}%
+                            </p>
+                          )}
+                          {coordinates && (
+                            <p className="mt-1 text-left font-mono text-xs text-muted-foreground">
+                              {coordinates[0].toFixed(5)}, {coordinates[1].toFixed(5)}
+                            </p>
+                          )}
+                          {!coordinates && (
+                            <p className="mt-1 text-left text-xs text-muted-foreground">
+                              No valid coordinates were returned for this result.
+                            </p>
                           )}
                         </div>
                       </div>
-                    </motion.div>
-                  ))}
+                    );
+
+                    return coordinates ? (
+                      <button
+                        key={`${detection.tile_id || detection.id || 'result'}-${index}`}
+                        type="button"
+                        onClick={() => setSelectedDetection(detection)}
+                        className="block w-full rounded-xl border border-border bg-background p-3 text-left transition hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        aria-label={`Focus map on ${detection.name || detection.detection_class || `result ${index + 1}`}`}
+                      >
+                        {content}
+                      </button>
+                    ) : (
+                      <article
+                        key={`${detection.tile_id || detection.id || 'result'}-${index}`}
+                        className="rounded-xl border border-border bg-background p-3"
+                      >
+                        {content}
+                      </article>
+                    );
+                  })}
                 </div>
+              )}
+
+              {!loading && !response && !errorMessage && (
+                <div className="mt-5 flex items-start gap-3 text-sm text-muted-foreground">
+                  <Clock3 className="mt-0.5 h-4 w-4 shrink-0" />
+                  <p>Submit a query to see results returned by the DISHA search service.</p>
+                </div>
+              )}
+
+              {response?.insights && (
+                <p className="mt-4 border-t border-border pt-3 text-sm leading-6 text-muted-foreground">
+                  {response.insights}
+                </p>
+              )}
+            </section>
+          </section>
+
+          <section className="flex min-h-[460px] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm xl:h-[calc(100dvh-260px)] xl:min-h-[500px] xl:max-h-[820px]">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <div>
+                <h2 className="text-sm font-semibold">Pune map</h2>
+                <p className="text-xs text-muted-foreground">
+                  Map focus changes only for returned result coordinates or your requested location.
+                </p>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Telemetry Panel - appears on the right side */}
-        <AnimatePresence>
-          {querySubmitted && telemetry && (
-            <motion.div
-              initial={{ opacity: 0, x: 100 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4, duration: 0.4 }}
-              className="absolute top-24 right-6 w-80"
-            >
-              <div className="rounded-lg bg-card/90 backdrop-blur-md border border-border/50 p-4 shadow-2xl">
-                <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  Analysis
-                </h3>
-
-                <div className="space-y-4">
-                  {telemetry.models && (
-                    <div>
-                      <div className="text-xs font-medium text-muted-foreground mb-2">
-                        Models Used
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {telemetry.models.map((model: string, index: number) => (
-                          <span
-                            key={index}
-                            className="px-2 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium"
-                          >
-                            {model}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {telemetry.processingTime && (
-                    <div>
-                      <div className="text-xs font-medium text-muted-foreground mb-1">
-                        Processing Time
-                      </div>
-                      <div className="text-sm text-foreground">
-                        {telemetry.processingTime}ms
-                      </div>
-                    </div>
-                  )}
-
-                  {telemetry.confidence && (
-                    <div>
-                      <div className="text-xs font-medium text-muted-foreground mb-1">
-                        Confidence Score
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-background rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-primary rounded-full transition-all duration-500"
-                            style={{ width: `${telemetry.confidence * 100}%` }}
-                          />
-                        </div>
-                        <span className="text-sm font-medium text-foreground">
-                          {Math.round(telemetry.confidence * 100)}%
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {telemetry.sources && (
-                    <div>
-                      <div className="text-xs font-medium text-muted-foreground mb-2">
-                        Data Sources
-                      </div>
-                      <div className="space-y-1">
-                        {telemetry.sources.map((source: string, index: number) => (
-                          <div
-                            key={index}
-                            className="text-xs text-foreground/80 flex items-center gap-2"
-                          >
-                            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                            {source}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Loading State */}
-        <AnimatePresence>
-          {loading && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-50"
-            >
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/20 mb-4">
-                  <Sparkles className="h-8 w-8 text-primary animate-pulse" />
-                </div>
-                <div className="text-lg font-medium text-foreground mb-2">
-                  Analyzing with AI...
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Processing your query with multiple AI models
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              {response?.processing_time_ms != null && (
+                <span className="hidden text-xs text-muted-foreground sm:inline">
+                  {response.processing_time_ms} ms
+                </span>
+              )}
+            </div>
+            <div className="flex h-[420px] flex-none flex-col xl:h-full xl:min-h-[500px] xl:flex-1">
+              <MapView focusLocation={focusLocation} />
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );
-};
+}
 
-export { QueryPage };
 export default QueryPage;
